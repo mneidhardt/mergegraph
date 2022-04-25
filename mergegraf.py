@@ -60,11 +60,3 @@ if __name__ == "__main__":
         
     g = Graph()
     g.showGraph(root)
-    
-
-
-    #bs = BaseStructures()
-    #sgraf = bs.readSerialisedGraph(filename)
-    #gtool = Graph()
-    #graf = gtool.deserialiseGraph(sgraf['nodes'], sgraf['cardinalities'])
-    #gtool.showGraph(graf)
