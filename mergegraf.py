@@ -13,7 +13,7 @@ def getXMLFiles(startpath):
             files.append(str(p))
     return files
     
-def makeGraph(node, path):
+def makeGraph(node, path, origin):
     if len(path) == 0:
         return
     else:
@@ -21,22 +21,25 @@ def makeGraph(node, path):
             child = GraphmergeNode(path[0])
             node.addChild(child)
             child.setParent(node)
-            makeGraph(child, path[1:])
+            child.addAttribute(origin)
+            makeGraph(child, path[1:], origin)
         else:
             # Here are 2 cases: Either path[0] is found among the kids or not.
-            # If found, continue with next name in path
+            # If found, continue with next name in path, i.e. do recursive call.
             # If not, a child is added to node.
             found = False
             for kid in node.getChildren():
                 if path[0].lower() == kid.getName().lower():
-                    makeGraph(kid, path[1:])
+                    kid.addAttribute(origin)
+                    makeGraph(kid, path[1:], origin)
                     found = True
 
             if not found:
                 child = GraphmergeNode(path[0])
                 node.addChild(child)
                 child.setParent(node)
-                makeGraph(child, path[1:])
+                child.addAttribute(origin)
+                makeGraph(child, path[1:], origin)
 
 if __name__ == "__main__":
     files = getXMLFiles(sys.argv[1])
@@ -56,7 +59,7 @@ if __name__ == "__main__":
         for xpath in xpathlist:
             path = xpath.split('/')
             path.pop(0) # Drop the root, it is already present in new graph.
-            makeGraph(root, path)
+            makeGraph(root, path, oldrootname)
         
     g = Graph()
     g.showGraph(root)
