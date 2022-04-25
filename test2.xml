@@ -12,4 +12,12 @@
             <regnorm/>
         </underjordisk>
     </insekter>
+    <fisk>
+        <ferskvandsfisk>
+            <gedde>
+                <grå/>
+                <sort/>
+            </gedde>
+        </ferskvandsfisk>
+    </fisk>
 </rodB>

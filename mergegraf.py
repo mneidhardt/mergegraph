@@ -13,48 +13,50 @@ def getXMLFiles(startpath):
             files.append(str(p))
     return files
     
-def createGraph(node, xpath):
-    for elem in xpath:
-        if len(node.getChildren()) == 0:
-            child = GraphmergeNode(elem)
-            node.addChild(child)
-            child.setParent(node)
-            node = child
-        else:
-            for kid in node.getChildren():
-                if elem.lower() == kid.getName().lower():
-                    node = kid
-
-def makeGraph(node, xpath):
-    if len(xpath) == 0:
+def makeGraph(node, path):
+    if len(path) == 0:
         return
     else:
         if len(node.getChildren()) == 0:
-            child = GraphmergeNode(xpath[0])
+            child = GraphmergeNode(path[0])
             node.addChild(child)
             child.setParent(node)
-            makeGraph(child, xpath[1:])
+            makeGraph(child, path[1:])
         else:
+            # Here are 2 cases: Either path[0] is found among the kids or not.
+            # If found, continue with next name in path
+            # If not, a child is added to node.
+            found = False
             for kid in node.getChildren():
-                if xpath[0].lower() == kid.getName().lower():
-                    makeGraph(kid, xpath[1:])
+                if path[0].lower() == kid.getName().lower():
+                    makeGraph(kid, path[1:])
+                    found = True
+
+            if not found:
+                child = GraphmergeNode(path[0])
+                node.addChild(child)
+                child.setParent(node)
+                makeGraph(child, path[1:])
 
 if __name__ == "__main__":
     files = getXMLFiles(sys.argv[1])
     commonrootname = 'ROOT'
     root = GraphmergeNode(commonrootname)
-    print(str(root))
+
+    # Go through the xml files to merge:
     for file in files:
         xmlparser = XMLParser(file)
+
+        # Set the name of root in the merged graph:
         oldrootname = xmlparser.setRootname(commonrootname)
+
+        # Get all xpaths for current file:
         xpathlist = xmlparser.getAllPaths()
-        print('\n-->', file, ' OldRoot=', oldrootname)
         
-        path = xpathlist[0].split('/')
         for xpath in xpathlist:
-            print('>> ', xpath, ' Start@',root.getName())
             path = xpath.split('/')
-            makeGraph(root, path[1:])
+            path.pop(0) # Drop the root, it is already present in new graph.
+            makeGraph(root, path)
         
     g = Graph()
     g.showGraph(root)
