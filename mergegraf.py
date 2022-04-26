@@ -2,9 +2,10 @@ import sys
 import datetime
 import io
 import pathlib
-sys.path.insert(1, '/Users/mine/kode/python')
+sys.path.insert(1, 'G:\Mine_Opgaver\kode')
 from mytools.graph.graphs import GraphmergeNode, Graph
 from mytools.xml.xmlparsing import XMLParser
+from mytools.xml.xmlbuilding import XMLBuilder
 
 def getXMLFiles(startpath):
     files = []
@@ -12,7 +13,7 @@ def getXMLFiles(startpath):
         if p.is_file() and str(p).lower().endswith('.xml'):
             files.append(str(p))
     return files
-    
+
 def makeGraph(node, path, origin):
     if len(path) == 0:
         return
@@ -61,5 +62,13 @@ if __name__ == "__main__":
             path.pop(0) # Drop the root, it is already present in new graph.
             makeGraph(root, path, oldrootname)
         
-    g = Graph()
-    g.showGraph(root)
+    if len(sys.argv) > 2:
+        if sys.argv[2] == 'csv':
+            g = Graph()
+            g.showMergedGraph(root)
+        elif sys.argv[2] == 'xml':
+            # If you want to show to merged graph as XML, with attributes as text, use this:
+            xmlbuilder = XMLBuilder(commonrootname)
+            xmlbuilder.buildXML(root, xmlbuilder.getNewXML())
+            xmlfilename = xmlbuilder.writeXML('mergedgraph')
+            print('Wrote xml to file: ', xmlfilename)
