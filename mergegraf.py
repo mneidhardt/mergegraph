@@ -2,7 +2,7 @@ import sys
 import datetime
 import io
 import pathlib
-sys.path.insert(1, 'G:\Mine_Opgaver\kode')
+sys.path.insert(1, '/Users/mine/kode/python')
 from mytools.graph.graphs import GraphmergeNode, Graph
 from mytools.xml.xmlparsing import XMLParser
 from mytools.xml.xmlbuilding import XMLBuilder
