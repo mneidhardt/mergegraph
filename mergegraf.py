@@ -2,17 +2,49 @@ import sys
 import datetime
 import io
 import pathlib
-sys.path.insert(1, '/Users/mine/kode/python')
+import re
+import csv
+sys.path.insert(1, 'G:\Mine_Opgaver\kode')
 from mytools.graph.graphs import GraphmergeNode, Graph
+from mytools.xml.xmltools import XMLTools
 from mytools.xml.xmlparsing import XMLParser
 from mytools.xml.xmlbuilding import XMLBuilder
 
-def getXMLFiles(startpath):
-    files = []
-    for p in pathlib.Path(startpath).iterdir():
-        if p.is_file() and str(p).lower().endswith('.xml'):
-            files.append(str(p))
-    return files
+# This script will merge a number of XML files into one.
+# It was made in order to merge the files from DDNXA used between DMS and KRIA,
+# 14 XSDs in all. These XSDs were converted to XML samples with XMLSpy, and the resulting
+# XML files are used for input here.
+
+# Read CSV file with cardinalities. This must not contain duplicates.
+# Returns a dict with XML element name as key, 
+# and a list with 2 elements, minOccurs and maxOccurs, as value.
+def readCardinalities(filename):
+    result = {}
+    
+    with open(filename) as csvfile:
+        crdr = csv.reader(csvfile, delimiter=';')
+        for row in crdr:
+            if len(row) == 3:   # or row[0].lstrip().startswith('#'):
+                result[row[0].strip()] = [row[1].strip(), row[2].strip()]
+
+    return result
+
+# Read a file with element names and accompanying maxOccurs.
+# Returns a dict with key = elementname and value = maxOccurs.
+def readMaxoccurs(filename):
+    result = {}
+    p1 = re.compile('.*name="([^"]+)".*', re.IGNORECASE)
+    p2 = re.compile('.*maxOccurs="(\d+)".*', re.IGNORECASE)
+    with open(filename) as f:
+        for line in f:
+            m1 = p1.match(line)
+            m2 = p2.match(line)
+            if m1 and m2:
+                result[m1.group(1)] = m2.group(1)
+            else:
+                print('NB: No maxoccurs match on this line: ', line.strip())
+
+    return result
 
 def makeGraph(node, path, origin):
     if len(path) == 0:
@@ -22,7 +54,10 @@ def makeGraph(node, path, origin):
             child = GraphmergeNode(path[0])
             node.addChild(child)
             child.setParent(node)
-            child.addAttribute(origin)
+            child.addOrigin(origin)
+            if path[0] in cardinalities:
+                child.addAttribute('minOccurs', cardinalities[path[0]][0])
+                child.addAttribute('maxOccurs', cardinalities[path[0]][1])
             makeGraph(child, path[1:], origin)
         else:
             # Here are 2 cases: Either path[0] is found among the kids or not.
@@ -31,7 +66,11 @@ def makeGraph(node, path, origin):
             found = False
             for kid in node.getChildren():
                 if path[0].lower() == kid.getName().lower():
-                    kid.addAttribute(origin)
+                    kid.addOrigin(origin)
+                    if path[0] in cardinalities:
+                        kid.addAttribute('minOccurs', cardinalities[path[0]][0])
+                        kid.addAttribute('maxOccurs', cardinalities[path[0]][1])
+                        # kid.addAttribute('maxOccurs', maxoccurs[path[0]])
                     makeGraph(kid, path[1:], origin)
                     found = True
 
@@ -39,11 +78,26 @@ def makeGraph(node, path, origin):
                 child = GraphmergeNode(path[0])
                 node.addChild(child)
                 child.setParent(node)
-                child.addAttribute(origin)
+                child.addOrigin(origin)
+                if path[0] in cardinalities:
+                    child.addAttribute('minOccurs', cardinalities[path[0]][0])
+                    child.addAttribute('maxOccurs', cardinalities[path[0]][1])
+                    # child.addAttribute('maxOccurs', maxoccurs[path[0]])
                 makeGraph(child, path[1:], origin)
 
 if __name__ == "__main__":
-    files = getXMLFiles(sys.argv[1])
+    xmldir = sys.argv[1]            # The dir where the xml files are.
+    cardinalityfile = sys.argv[2]   # The file folding the element names and corresponding cardinalities.
+                                    # This is a csv file with 3 fields per line: element-name; minOccurs; maxOccurs.
+    
+    xt = XMLTools()
+    
+    files = xt.getFilesByType(xmldir, '.xml')
+    
+    cardinalities = readCardinalities(cardinalityfile)
+    for k in cardinalities:
+        print(k, cardinalities[k])
+
     commonrootname = 'ROOT'
     root = GraphmergeNode(commonrootname)
 
@@ -62,11 +116,11 @@ if __name__ == "__main__":
             path.pop(0) # Drop the root, it is already present in new graph.
             makeGraph(root, path, oldrootname)
         
-    if len(sys.argv) > 2:
-        if sys.argv[2] == 'csv':
+    if len(sys.argv) > 3:
+        if sys.argv[3] == 'csv':
             g = Graph()
             g.showMergedGraph(root)
-        elif sys.argv[2] == 'xml':
+        elif sys.argv[3] == 'xml':
             # If you want to show to merged graph as XML, with attributes as text, use this:
             xmlbuilder = XMLBuilder(commonrootname)
             xmlbuilder.buildXML(root, xmlbuilder.getNewXML())

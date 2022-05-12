@@ -9,6 +9,8 @@ from mytools.xml.xmlparsing import XMLParser
 # Given a number of XML files and a file with a JSON structure, this searches the 
 # JSON keys for every element name in the XML files.
 # I.e., I want to see which of the XML leaves are found as a JSON key.
+# This only concerns itself with names of individual elemets, i.e.
+# it doesnt try to find full paths.
 
 def getXMLFiles(startpath):
     files = []
