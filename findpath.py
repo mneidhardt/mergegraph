@@ -15,15 +15,14 @@ if __name__ == "__main__":
     # arg 1 is the file containing the JSON structure.
     # arg 2 is the path.
     jsonfile = sys.argv[1]
-    path = sys.argv[2]
+    path = sys.argv[2].split('/')
     jt = JSONTool()
     jsonobj = jt.readJSON(jsonfile)
         
-    result = jt.findPath(jsonobj, path)
+    result = jt.findPathRecursive(jsonobj, path)
     if result is None:
         print('  Not found.')
     else:
         newfield = jt.loads('{ "description": "Sequence number from DDNXA", "type": "number"}')
-        #print(newfield)
-        #result["seqno"] = newfield
+        result["seqno"] = newfield
         print(jt.dumps(jsonobj))
