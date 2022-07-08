@@ -86,17 +86,20 @@ def makeGraph(node, path, origin):
                 makeGraph(child, path[1:], origin)
 
 if __name__ == "__main__":
+    # Args: 
     xmldir = sys.argv[1]            # The dir where the xml files are.
-    cardinalityfile = sys.argv[2]   # The file folding the element names and corresponding cardinalities.
-                                    # This is a csv file with 3 fields per line: element-name; minOccurs; maxOccurs.
-    
+    cardinalityfile = sys.argv[2]   # The file holding the element names and corresponding cardinalities. This is a csv file with 3 fields per line: element-name; minOccurs; maxOccurs.
+                                    # This can be -, meaning no cardinalities to read.
+    output = sys.argv[3]            # The type of output wanted. Either csv or xml.
+
     xt = XMLTools()
     
     files = xt.getFilesByType(xmldir, '.xml')
     
-    cardinalities = readCardinalities(cardinalityfile)
-    for k in cardinalities:
-        print(k, cardinalities[k])
+    if cardinalityfile == '-':
+        cardinalities = {}
+    else:
+        cardinalities = readCardinalities(cardinalityfile)
 
     commonrootname = 'ROOT'
     root = GraphmergeNode(commonrootname)
